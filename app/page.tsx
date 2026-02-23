@@ -8,13 +8,13 @@ import {
   Upload,
   PlusCircle,
   Settings,
-  ChevronUp,
-  ChevronDown,
   TrendingUp,
   TrendingDown,
   Target,
   Zap,
 } from "lucide-react";
+import ImportCSV from "./components/ImportCSV";
+import { Trade } from "./lib/parseFidelityCSV";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
@@ -24,39 +24,111 @@ const navItems = [
   { icon: Upload, label: "Import Trades", id: "import" },
 ];
 
-const stats = [
-  {
-    label: "Net P&L",
-    value: "+$0.00",
-    sub: "All time",
-    positive: true,
-    icon: TrendingUp,
-  },
-  {
-    label: "Win Rate",
-    value: "0%",
-    sub: "0 trades",
-    positive: true,
-    icon: Target,
-  },
-  {
-    label: "Profit Factor",
-    value: "0.00",
-    sub: "Avg win / avg loss",
-    positive: true,
-    icon: Zap,
-  },
-  {
-    label: "Avg Loss",
-    value: "$0.00",
-    sub: "Per losing trade",
-    positive: false,
-    icon: TrendingDown,
-  },
-];
+function StatCard({
+  label,
+  value,
+  sub,
+  positive,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  positive: boolean;
+  icon: any;
+}) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderRadius: "12px",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "12px",
+        }}
+      >
+        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "500" }}>
+          {label}
+        </span>
+        <Icon size={16} color={positive ? "var(--accent-green)" : "var(--accent-red)"} />
+      </div>
+      <div
+        style={{
+          fontSize: "24px",
+          fontWeight: "700",
+          fontFamily: "'Syne', sans-serif",
+          color: positive ? "var(--accent-green)" : "var(--accent-red)",
+          marginBottom: "4px",
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{sub}</div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
+  const [trades, setTrades] = useState<Trade[]>([]);
+
+  const handleImport = (imported: Trade[]) => {
+    setTrades((prev) => {
+      const existingIds = new Set(prev.map((t) => t.id));
+      const newTrades = imported.filter((t) => !existingIds.has(t.id));
+      return [...prev, ...newTrades].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    });
+    setActivePage("dashboard");
+  };
+
+  // Calculate stats
+  const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+  const wins = trades.filter((t) => t.status === "win");
+  const losses = trades.filter((t) => t.status === "loss");
+  const winRate = trades.length > 0 ? Math.round((wins.length / trades.length) * 100) : 0;
+  const avgWin = wins.length > 0 ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : 0;
+  const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((s, t) => s + t.pnl, 0) / losses.length) : 0;
+  const profitFactor = avgLoss > 0 ? (avgWin / avgLoss).toFixed(2) : "—";
+
+  const stats = [
+    {
+      label: "Net P&L",
+      value: `${totalPnl >= 0 ? "+" : ""}$${totalPnl.toFixed(2)}`,
+      sub: `${trades.length} total trades`,
+      positive: totalPnl >= 0,
+      icon: TrendingUp,
+    },
+    {
+      label: "Win Rate",
+      value: `${winRate}%`,
+      sub: `${wins.length} wins / ${losses.length} losses`,
+      positive: winRate >= 50,
+      icon: Target,
+    },
+    {
+      label: "Profit Factor",
+      value: String(profitFactor),
+      sub: "Avg win / avg loss",
+      positive: Number(profitFactor) >= 1,
+      icon: Zap,
+    },
+    {
+      label: "Avg Loss",
+      value: `$${avgLoss.toFixed(2)}`,
+      sub: "Per losing trade",
+      positive: false,
+      icon: TrendingDown,
+    },
+  ];
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
@@ -72,7 +144,6 @@ export default function Home() {
           padding: "24px 0",
         }}
       >
-        {/* Logo */}
         <div style={{ padding: "0 24px 32px" }}>
           <h1
             style={{
@@ -91,7 +162,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Nav */}
         <nav style={{ flex: 1, padding: "0 12px" }}>
           {navItems.map(({ icon: Icon, label, id }) => {
             const active = activePage === id;
@@ -137,9 +207,9 @@ export default function Home() {
           })}
         </nav>
 
-        {/* Add Trade Button */}
         <div style={{ padding: "0 12px 16px" }}>
           <button
+            onClick={() => setActivePage("import")}
             style={{
               width: "100%",
               display: "flex",
@@ -155,7 +225,6 @@ export default function Home() {
               fontFamily: "'DM Sans', sans-serif",
               fontWeight: "600",
               cursor: "pointer",
-              transition: "all 0.15s ease",
             }}
           >
             <PlusCircle size={15} />
@@ -163,13 +232,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Settings */}
-        <div
-          style={{
-            padding: "16px 24px 0",
-            borderTop: "1px solid var(--border)",
-          }}
-        >
+        <div style={{ padding: "16px 24px 0", borderTop: "1px solid var(--border)" }}>
           <button
             style={{
               display: "flex",
@@ -191,161 +254,168 @@ export default function Home() {
       </aside>
 
       {/* Main Content */}
-      <main
-        style={{
-          flex: 1,
-          overflow: "auto",
-          background: "var(--bg-primary)",
-          padding: "32px",
-        }}
-      >
-        {/* Header */}
-        <div style={{ marginBottom: "32px" }}>
-          <h2
-            style={{
-              fontSize: "26px",
-              fontWeight: "700",
-              color: "var(--text-primary)",
-              letterSpacing: "-0.5px",
-            }}
-          >
-            Dashboard
-          </h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>
-            Welcome back. Here's how you're performing.
-          </p>
-        </div>
+      <main style={{ flex: 1, overflow: "auto", background: "var(--bg-primary)", padding: "32px" }}>
 
-        {/* Stats Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "16px",
-            marginBottom: "32px",
-          }}
-        >
-          {stats.map(({ label, value, sub, positive, icon: Icon }) => (
-            <div
-              key={label}
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                borderRadius: "12px",
-                padding: "20px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: "12px",
-                }}
-              >
-                <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "500" }}>
-                  {label}
-                </span>
-                <Icon
-                  size={16}
-                  color={positive ? "var(--accent-green)" : "var(--accent-red)"}
-                />
-              </div>
-              <div
-                style={{
-                  fontSize: "24px",
-                  fontWeight: "700",
-                  fontFamily: "'Syne', sans-serif",
-                  color: positive ? "var(--accent-green)" : "var(--accent-red)",
-                  marginBottom: "4px",
-                }}
-              >
-                {value}
-              </div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{sub}</div>
+        {/* DASHBOARD */}
+        {activePage === "dashboard" && (
+          <>
+            <div style={{ marginBottom: "32px" }}>
+              <h2 style={{ fontSize: "26px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.5px" }}>
+                Dashboard
+              </h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>
+                Welcome back. Here's how you're performing.
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* Empty State */}
-        <div
-          style={{
-            background: "var(--bg-card)",
-            border: "1px dashed var(--border)",
-            borderRadius: "16px",
-            padding: "60px",
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "12px",
-              background: "var(--accent-green-dim)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 16px",
-            }}
-          >
-            <Upload size={20} color="var(--accent-green)" />
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "32px" }}>
+              {stats.map((s) => <StatCard key={s.label} {...s} />)}
+            </div>
+
+            {/* Trades Table or Empty State */}
+            {trades.length === 0 ? (
+              <div
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px dashed var(--border)",
+                  borderRadius: "16px",
+                  padding: "60px",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{
+                  width: "48px", height: "48px", borderRadius: "12px",
+                  background: "var(--accent-green-dim)", display: "flex",
+                  alignItems: "center", justifyContent: "center", margin: "0 auto 16px",
+                }}>
+                  <Upload size={20} color="var(--accent-green)" />
+                </div>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "8px", color: "var(--text-primary)" }}>
+                  No trades yet
+                </h3>
+                <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "24px" }}>
+                  Import your Fidelity CSV or add a trade manually to get started.
+                </p>
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                  <button
+                    onClick={() => setActivePage("import")}
+                    style={{
+                      padding: "10px 20px", borderRadius: "8px", border: "none",
+                      background: "var(--accent-green)", color: "#000",
+                      fontSize: "13px", fontWeight: "600",
+                      fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
+                    }}
+                  >
+                    Import CSV
+                  </button>
+                  <button
+                    style={{
+                      padding: "10px 20px", borderRadius: "8px",
+                      border: "1px solid var(--border)", background: "transparent",
+                      color: "var(--text-primary)", fontSize: "13px",
+                      fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
+                    }}
+                  >
+                    Add Manually
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "16px", overflow: "hidden" }}>
+                <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
+                  <h3 style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-primary)" }}>
+                    Trade History
+                  </h3>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+                        {["Date", "Symbol", "Type", "Strike", "Expiry", "Qty", "Entry", "Exit", "P&L", "Status"].map((h) => (
+                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", color: "var(--text-muted)", fontWeight: "600", whiteSpace: "nowrap" }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trades.map((trade) => (
+                        <tr
+                          key={trade.id}
+                          style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{trade.date}</td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-primary)", fontWeight: "700" }}>{trade.underlying}</td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span style={{
+                              padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "600",
+                              background: trade.optionType === "call" ? "rgba(77,159,255,0.15)" : "rgba(255,77,106,0.15)",
+                              color: trade.optionType === "call" ? "var(--accent-blue)" : "var(--accent-red)",
+                            }}>
+                              {trade.optionType ? trade.optionType.toUpperCase() : trade.type.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
+                            {trade.strike ? `$${trade.strike}` : "—"}
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
+                            {trade.expiry || "—"}
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{trade.quantity}</td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>${trade.entryPrice}</td>
+                          <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>${trade.exitPrice}</td>
+                          <td style={{ padding: "12px 16px", fontWeight: "700", color: trade.pnl >= 0 ? "var(--accent-green)" : "var(--accent-red)" }}>
+                            {trade.pnl >= 0 ? "+" : ""}${trade.pnl}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <span style={{
+                              padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "600",
+                              background: trade.status === "win" ? "var(--accent-green-dim)" : "var(--accent-red-dim)",
+                              color: trade.status === "win" ? "var(--accent-green)" : "var(--accent-red)",
+                            }}>
+                              {trade.status.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* IMPORT PAGE */}
+        {activePage === "import" && (
+          <>
+            <div style={{ marginBottom: "32px" }}>
+              <h2 style={{ fontSize: "26px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.5px" }}>
+                Import Trades
+              </h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>
+                Upload your Fidelity CSV export to automatically import your trades.
+              </p>
+            </div>
+            <ImportCSV onImport={handleImport} />
+          </>
+        )}
+
+        {/* COMING SOON PAGES */}
+        {["journal", "analytics", "calendar"].includes(activePage) && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: "12px" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text-primary)" }}>
+              {navItems.find(n => n.id === activePage)?.label}
+            </h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Coming soon — we're building this next! 🚀</p>
           </div>
-          <h3
-            style={{
-              fontSize: "18px",
-              fontWeight: "700",
-              marginBottom: "8px",
-              color: "var(--text-primary)",
-            }}
-          >
-            No trades yet
-          </h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px", marginBottom: "24px" }}>
-            Import your Fidelity CSV or add a trade manually to get started.
-          </p>
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-            <button
-              style={{
-                padding: "10px 20px",
-                borderRadius: "8px",
-                border: "none",
-                background: "var(--accent-green)",
-                color: "#000",
-                fontSize: "13px",
-                fontWeight: "600",
-                fontFamily: "'DM Sans', sans-serif",
-                cursor: "pointer",
-              }}
-            >
-              Import CSV
-            </button>
-            <button
-              style={{
-                padding: "10px 20px",
-                borderRadius: "8px",
-                border: "1px solid var(--border)",
-                background: "transparent",
-                color: "var(--text-primary)",
-                fontSize: "13px",
-                fontFamily: "'DM Sans', sans-serif",
-                cursor: "pointer",
-              }}
-            >
-              Add Manually
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* Footer */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "48px",
-            color: "var(--text-muted)",
-            fontSize: "12px",
-          }}
-        >
+        <div style={{ textAlign: "center", marginTop: "48px", color: "var(--text-muted)", fontSize: "12px" }}>
           Made with ❤️ by The Quantum Dev
         </div>
       </main>
