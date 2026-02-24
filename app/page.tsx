@@ -1,4 +1,5 @@
 "use client";
+import TradePanel from "./components/TradePanel";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -79,11 +80,17 @@ export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   useEffect(() => {
   const loadTrades = async () => {
     const res = await fetch("/api/trades");
     const data = await res.json();
-    if (Array.isArray(data)) setTrades(data);
+    if (Array.isArray(data)) {
+      setTrades(data.map((t: any) => ({
+        ...t,
+        tags: typeof t.tags === "string" ? JSON.parse(t.tags) : t.tags || [],
+      })));
+    }
     setLoading(false);
   };
   loadTrades();
@@ -362,6 +369,7 @@ export default function Home() {
                           key={trade.id}
                           style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
+                          onClick={() => setSelectedTrade(trade)}
                           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                         >
                           <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{trade.date}</td>
@@ -436,6 +444,16 @@ export default function Home() {
           Made with ❤️ by The Quantum Dev
         </div>
       </main>
+      <TradePanel
+        trade={selectedTrade}
+        onClose={() => setSelectedTrade(null)}
+        onSave={(updated) => {
+          setTrades((prev) =>
+            prev.map((t) => (t.id === updated.id ? updated : t))
+          );
+          setSelectedTrade(updated);
+        }}
+      />
     </div>
   );
 }

@@ -29,3 +29,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to save trades" }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, ...data } = body;
+    const trade = await prisma.trade.update({
+      where: { id },
+      data,
+    });
+    return NextResponse.json(trade);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Failed to update trade" }, { status: 500 });
+  }
+}
