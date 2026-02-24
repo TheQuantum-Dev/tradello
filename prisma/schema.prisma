@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Trade {
+  id           String   @id
+  date         String
+  symbol       String
+  underlying   String
+  type         String
+  direction    String
+  optionType   String?
+  strike       Float?
+  expiry       String?
+  quantity     Float
+  entryPrice   Float
+  exitPrice    Float
+  commission   Float
+  fees         Float
+  pnl          Float
+  status       String
+  entryTime    String?
+  exitTime     String?
+  rr           String?
+  tags         String   @default("[]")
+  journalEntry String?
+  link         String?
+  imageUrls    String   @default("[]")
+  createdAt    DateTime @default(now())
+}

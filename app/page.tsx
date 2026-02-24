@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -78,8 +78,24 @@ function StatCard({
 export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
   const [trades, setTrades] = useState<Trade[]>([]);
-
-  const handleImport = (imported: Trade[]) => {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  const loadTrades = async () => {
+    const res = await fetch("/api/trades");
+    const data = await res.json();
+    if (Array.isArray(data)) setTrades(data);
+    setLoading(false);
+  };
+  loadTrades();
+}, []);
+  
+  const handleImport = async (imported: Trade[]) => {
+  const res = await fetch("/api/trades", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trades: imported }),
+  });
+  if (res.ok) {
     setTrades((prev) => {
       const existingIds = new Set(prev.map((t) => t.id));
       const newTrades = imported.filter((t) => !existingIds.has(t.id));
@@ -88,7 +104,8 @@ export default function Home() {
       );
     });
     setActivePage("dashboard");
-  };
+  }
+};
 
   // Calculate stats
   const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);

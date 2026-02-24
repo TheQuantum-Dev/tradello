@@ -1,0 +1,27 @@
+-- CreateTable
+CREATE TABLE "Trade" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "date" TEXT NOT NULL,
+    "symbol" TEXT NOT NULL,
+    "underlying" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "direction" TEXT NOT NULL,
+    "optionType" TEXT,
+    "strike" REAL,
+    "expiry" TEXT,
+    "quantity" REAL NOT NULL,
+    "entryPrice" REAL NOT NULL,
+    "exitPrice" REAL NOT NULL,
+    "commission" REAL NOT NULL,
+    "fees" REAL NOT NULL,
+    "pnl" REAL NOT NULL,
+    "status" TEXT NOT NULL,
+    "entryTime" TEXT,
+    "exitTime" TEXT,
+    "rr" TEXT,
+    "tags" TEXT NOT NULL DEFAULT '[]',
+    "journalEntry" TEXT,
+    "link" TEXT,
+    "imageUrls" TEXT NOT NULL DEFAULT '[]',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
