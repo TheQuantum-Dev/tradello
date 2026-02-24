@@ -21,6 +21,7 @@ export interface Trade {
   rr?: string;
   tags?: string[];
   journalEntry?: string;
+  imageUrls?: string[] | string;
   link?: string;
 }
 

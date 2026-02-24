@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Clock, TrendingUp, Tag, Link, FileText, Save, Plus } from "lucide-react";
+import { X, Clock, TrendingUp, Tag, Link, FileText, Save, Plus, Image, Trash2 } from "lucide-react";
 import { Trade } from "../lib/parseFidelityCSV";
 
 interface Props {
@@ -25,6 +25,8 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
   const [customTag, setCustomTag] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (trade) {
@@ -34,6 +36,11 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
       setJournal(trade.journalEntry || "");
       setLink(trade.link || "");
       setTags(trade.tags || []);
+      setImages(
+        typeof trade.imageUrls === "string"
+          ? JSON.parse(trade.imageUrls || "[]")
+          : trade.imageUrls || []
+      );
     }
   }, [trade]);
 
@@ -52,6 +59,28 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        uploaded.push(data.url);
+      }
+    }
+    setImages((prev) => [...prev, ...uploaded]);
+    setUploading(false);
+  };
+
+  const removeImage = (url: string) => {
+    setImages((prev) => prev.filter((img) => img !== url));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const updated = {
@@ -62,6 +91,7 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
       journalEntry: journal,
       link,
       tags,
+      imageUrls: images,
     };
 
     const res = await fetch("/api/trades", {
@@ -75,6 +105,7 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
         journalEntry: journal,
         link,
         tags: JSON.stringify(tags),
+        imageUrls: JSON.stringify(images),
       }),
     });
 
@@ -187,12 +218,12 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
                 padding: "12px", border: "1px solid var(--border)",
               }}>
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", marginBottom: "4px" }}>{label}</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>{value}</div>
+                <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>{String(value)}</div>
               </div>
             ))}
           </div>
 
-          {/* Times & R:R */}
+          {/* Times */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600", display: "block", marginBottom: "8px" }}>
               <Clock size={12} style={{ display: "inline", marginRight: "6px" }} />
@@ -203,7 +234,6 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
                 type="time"
                 value={entryTime}
                 onChange={(e) => setEntryTime(e.target.value)}
-                placeholder="Entry time"
                 style={{
                   flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)",
                   borderRadius: "8px", padding: "10px 12px", color: "var(--text-primary)",
@@ -214,7 +244,6 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
                 type="time"
                 value={exitTime}
                 onChange={(e) => setExitTime(e.target.value)}
-                placeholder="Exit time"
                 style={{
                   flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)",
                   borderRadius: "8px", padding: "10px 12px", color: "var(--text-primary)",
@@ -224,6 +253,7 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
             </div>
           </div>
 
+          {/* R:R */}
           <div style={{ marginBottom: "20px" }}>
             <label style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600", display: "block", marginBottom: "8px" }}>
               <TrendingUp size={12} style={{ display: "inline", marginRight: "6px" }} />
@@ -312,6 +342,50 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
             />
           </div>
 
+          {/* Screenshots */}
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600", display: "block", marginBottom: "8px" }}>
+              <Image size={12} style={{ display: "inline", marginRight: "6px" }} />
+              SCREENSHOTS
+            </label>
+            {images.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                {images.map((url) => (
+                  <div key={url} style={{ position: "relative", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border)" }}>
+                    <img src={url} alt="Trade screenshot" style={{ width: "100%", height: "120px", objectFit: "cover", display: "block" }} />
+                    <button
+                      onClick={() => removeImage(url)}
+                      style={{
+                        position: "absolute", top: "6px", right: "6px",
+                        background: "rgba(0,0,0,0.7)", border: "none",
+                        borderRadius: "4px", padding: "4px", cursor: "pointer",
+                        color: "white", display: "flex", alignItems: "center",
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: "8px", padding: "10px", borderRadius: "8px",
+              border: "1px dashed var(--border)", cursor: "pointer",
+              color: "var(--text-muted)", fontSize: "13px",
+              background: "var(--bg-card)",
+            }}>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                style={{ display: "none" }}
+              />
+              {uploading ? "Uploading..." : "📎 Attach screenshots"}
+            </label>
+          </div>
+
           {/* Journal */}
           <div style={{ marginBottom: "24px" }}>
             <label style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600", display: "block", marginBottom: "8px" }}>
@@ -342,7 +416,7 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
             style={{
               width: "100%", padding: "12px", borderRadius: "8px",
               border: "none", cursor: saving ? "not-allowed" : "pointer",
-              background: saved ? "var(--accent-green)" : "var(--accent-green)",
+              background: "var(--accent-green)",
               color: "#000", fontSize: "14px", fontWeight: "700",
               fontFamily: "'DM Sans', sans-serif",
               opacity: saving ? 0.7 : 1,
