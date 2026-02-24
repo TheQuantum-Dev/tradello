@@ -1,5 +1,6 @@
 "use client";
 import TradePanel from "./components/TradePanel";
+import PnLCalendar from "./components/PnLCalendar";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -429,8 +430,16 @@ export default function Home() {
           </>
         )}
 
+        {/* CALENDAR PAGE */}
+        {activePage === "calendar" && (
+          <PnLCalendar
+            trades={trades}
+            onSelectTrade={(trade) => setSelectedTrade(trade)}
+          />
+        )}
+
         {/* COMING SOON PAGES */}
-        {["journal", "analytics", "calendar"].includes(activePage) && (
+        {["journal", "analytics"].includes(activePage) && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: "12px" }}>
             <h2 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text-primary)" }}>
               {navItems.find(n => n.id === activePage)?.label}
