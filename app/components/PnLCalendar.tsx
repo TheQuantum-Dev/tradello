@@ -322,7 +322,7 @@ export default function PnLCalendar({ trades, onSelectTrade }: Props) {
                   {/* Tags */}
                   {trade.tags && trade.tags.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px" }}>
-                      {trade.tags.map((tag) => (
+                      {(trade.tags as string[]).map((tag: string) => (
                         <span key={tag} style={{
                           padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "600",
                           background: "var(--accent-green-dim)", color: "var(--accent-green)",

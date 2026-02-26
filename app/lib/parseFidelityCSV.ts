@@ -1,29 +1,5 @@
-export interface Trade {
-  id: string;
-  date: string;
-  symbol: string;
-  underlying: string;
-  type: "stock" | "option" | "future";
-  direction: "long" | "short";
-  optionType?: "call" | "put";
-  strike?: number;
-  expiry?: string;
-  quantity: number;
-  entryPrice: number;
-  exitPrice: number;
-  commission: number;
-  fees: number;
-  pnl: number;
-  status: "win" | "loss" | "breakeven";
-  // User fills these in after import
-  entryTime?: string;
-  exitTime?: string;
-  rr?: string;
-  tags?: string[];
-  journalEntry?: string;
-  imageUrls?: string[] | string;
-  link?: string;
-}
+import { Trade } from "./types";
+export type { Trade };
 
 interface RawRow {
   date: string;
@@ -50,7 +26,6 @@ function parseRawRows(csvText: string): RawRow[] {
     const line = lines[i];
     if (!line || line.startsWith('"The data')) break;
 
-    // Parse CSV line respecting quoted fields
     const cols: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -69,7 +44,6 @@ function parseRawRows(csvText: string): RawRow[] {
     if (cols.length < 11) continue;
 
     const action = cols[1];
-    // Only process buy/sell trade actions
     if (!action.includes("YOU BOUGHT") && !action.includes("YOU SOLD")) continue;
 
     rows.push({
@@ -88,20 +62,19 @@ function parseRawRows(csvText: string): RawRow[] {
   return rows;
 }
 
-function detectType(symbol: string): "stock" | "option" | "future" {
+function detectType(symbol: string): string {
   if (symbol.startsWith("-")) return "option";
   if (symbol.startsWith("/")) return "future";
   return "stock";
 }
 
 function parseOptionDetails(symbol: string, description: string) {
-  // e.g. -SPXW260220C6955
   const match = symbol.match(/([A-Z]+)(\d{6})([CP])(\d+(\.\d+)?)/);
   if (!match) return {};
 
   const optionType = match[3] === "C" ? "call" : "put";
   const strike = parseFloat(match[4]);
-  const dateStr = match[2]; // YYMMDD
+  const dateStr = match[2];
   const expiry = `20${dateStr.slice(0, 2)}-${dateStr.slice(2, 4)}-${dateStr.slice(4, 6)}`;
   const underlying = match[1].replace(/^-/, "");
 
@@ -112,7 +85,6 @@ export function parseFidelityCSV(csvText: string): Trade[] {
   const rows = parseRawRows(csvText);
   const trades: Trade[] = [];
 
-  // Group by symbol to match opens and closes
   const grouped: Record<string, RawRow[]> = {};
   for (const row of rows) {
     if (!grouped[row.symbol]) grouped[row.symbol] = [];
@@ -124,7 +96,6 @@ export function parseFidelityCSV(csvText: string): Trade[] {
     const buys = group.filter((r) => r.action.includes("YOU BOUGHT"));
     const sells = group.filter((r) => r.action.includes("YOU SOLD"));
 
-    // Match buys and sells as pairs
     const pairs = Math.min(buys.length, sells.length);
     for (let i = 0; i < pairs; i++) {
       const buy = buys[i];
@@ -166,7 +137,7 @@ export function parseFidelityCSV(csvText: string): Trade[] {
         pnl,
         status: pnl > 0 ? "win" : pnl < 0 ? "loss" : "breakeven",
         ...(type === "option" && {
-          optionType: optionDetails.optionType as "call" | "put",
+          optionType: optionDetails.optionType,
           strike: optionDetails.strike,
           expiry: optionDetails.expiry,
         }),
@@ -176,7 +147,6 @@ export function parseFidelityCSV(csvText: string): Trade[] {
     }
   }
 
-  // Sort by date newest first
   return trades.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );

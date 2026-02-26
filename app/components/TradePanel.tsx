@@ -35,7 +35,7 @@ export default function TradePanel({ trade, onClose, onSave }: Props) {
       setRr(trade.rr || "");
       setJournal(trade.journalEntry || "");
       setLink(trade.link || "");
-      setTags(trade.tags || []);
+      setTags(Array.isArray(trade.tags) ? trade.tags : []);
       setImages(
         typeof trade.imageUrls === "string"
           ? JSON.parse(trade.imageUrls || "[]")
