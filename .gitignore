@@ -43,7 +43,6 @@ next-env.d.ts
 # prisma_db files
 prisma/tradello.db
 prisma/tradello.db-journal
-.env
 
 # uploads
 public/uploads/
