@@ -1,8 +1,19 @@
 # Tradello
 
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-1.1.0-00e57a?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
+![Open Source](https://img.shields.io/badge/open--source-yes-00e57a?style=flat-square)
+
 **An institutional-grade trading journal built for serious traders.**
 
-Tradello is an open-source trading performance platform that gives you full ownership of your data, deep analytics, and a structured way to review and improve your trading — without subscriptions, paywalls, or your data living on someone else's server.
+[Features](#features) · [Getting Started](#getting-started) · [Roadmap](#roadmap) · [Contributing](#contributing)
+
+</div>
 
 ---
 
@@ -11,7 +22,7 @@ Tradello is an open-source trading performance platform that gives you full owne
 Most trading journals are either too simple to be useful or locked behind expensive subscriptions. Tradello is built differently.
 
 - **Your data stays yours.** Everything runs locally on your machine using SQLite. No cloud, no accounts, no tracking.
-- **Built for serious traders.** Multi-account support, equity curve tracking, tag-based behavioral analytics, and a daily journal — not just a trade log.
+- **Built for serious traders.** Multi-account support, real equity curve tracking, tag-based behavioral analytics, and a structured daily journal — not just a trade log.
 - **Open source.** The entire codebase is available, auditable, and open to contribution.
 
 ---
@@ -20,13 +31,18 @@ Most trading journals are either too simple to be useful or locked behind expens
 
 **Trade Management**
 - Import trades directly from Fidelity CSV exports
-- Automatic parsing of options, stocks, and futures
-- Multi-account support — track multiple brokers separately
+- Manual trade entry with live P&L preview and auto symbol detection
+- Multi-account support — track multiple brokers separately with account-scoped data
 - Full trade journal with notes, tags, screenshots, entry/exit times, and R:R ratio
+
+**Dashboard**
+- Real-time filtering by symbol, status, tag, and date range
+- Stat cards that update dynamically based on active filters
+- Full trade history table with click-to-review
 
 **Analytics**
 - Real equity curve starting from your actual account balance
-- Win rate, profit factor, average win/loss, drawdown
+- Win rate, profit factor, average win/loss
 - P&L breakdown by symbol and tag
 - Best and worst trade tracking
 
@@ -46,9 +62,8 @@ Most trading journals are either too simple to be useful or locked behind expens
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 15 (App Router) |
-| Language | TypeScript |
+| Language | TypeScript 5 |
 | Database | SQLite via Prisma 5 |
-| Styling | CSS Variables + Inline styles |
 | Charts | Recharts |
 | Icons | Lucide React |
 
@@ -71,8 +86,10 @@ cd tradello
 # Install dependencies
 npm install
 
-# Set up the database
+# Set up environment
 cp .env.example .env
+
+# Set up the database
 npx prisma migrate dev
 
 # Start the development server
@@ -84,7 +101,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### First Steps
 
 1. Go to **Accounts** and create your first trading account with your starting balance
-2. Go to **Import Trades** and upload your Fidelity CSV export
+2. Go to **Import Trades** and upload your Fidelity CSV export — or use **Add Trade** to enter manually
 3. Your trades will be linked to your account and visible across Dashboard, Journal, Analytics, and Calendar
 
 ---
@@ -93,9 +110,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Currently supported brokers via CSV:
 
-- **Fidelity** — fully supported
+| Broker | Status |
+|---|---|
+| Fidelity |  Supported |
+| TD Ameritrade |  Coming soon |
+| Tastytrade |  Coming soon |
+| Interactive Brokers |  Coming soon |
 
-More brokers are on the roadmap. If you want to add support for your broker, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+More brokers are on the roadmap. To add support for your broker, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ### How to export from Fidelity
 
@@ -119,6 +141,8 @@ tradello/
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── migrations/       # Migration history
+├── scripts/
+│   └── changelog.js      # Automated changelog generator
 └── public/
     └── uploads/          # Local screenshot storage (gitignored)
 ```
@@ -127,14 +151,13 @@ tradello/
 
 ## Roadmap
 
-- [ ] Manual trade entry (no CSV required)
-- [ ] Additional broker CSV support (TD Ameritrade, IBKR, Tastytrade)
-- [ ] Dashboard filtering by symbol, tag, and date range
+- [ ] TD Ameritrade, Tastytrade, IBKR CSV support
+- [ ] Settings page (theme, default account, date format)
+- [ ] Export journal as PDF or CSV
+- [ ] Sharpe ratio, Sortino ratio, drawdown duration
+- [ ] MAE/MFE analysis
 - [ ] Weekly and yearly calendar views
-- [ ] Sharpe ratio, Sortino ratio, and drawdown duration
-- [ ] Trade replay and MAE/MFE analysis
-- [ ] Dark/light theme toggle
-- [ ] Export journal as PDF
+- [ ] GitHub Wiki with setup guides and metric explanations
 - [ ] Hosted version (optional, for non-technical users)
 
 ---
@@ -142,6 +165,12 @@ tradello/
 ## Contributing
 
 Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 
 ---
 
@@ -153,8 +182,10 @@ A hosted version may be offered in the future for users who prefer not to self-h
 
 ---
 
-## Author
+<div align="center">
 
 Built by [TheQuantum-Dev](https://github.com/TheQuantum-Dev)
 
-> *Built for traders who take their craft seriously.*
+*Built for traders who take their craft seriously.*
+
+</div>
