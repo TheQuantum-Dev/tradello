@@ -43,4 +43,5 @@ export type PageId =
   | "analytics"
   | "calendar"
   | "import"
-  | "accounts";
+  | "accounts"
+  | "settings";

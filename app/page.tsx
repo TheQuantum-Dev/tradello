@@ -11,6 +11,7 @@ import CalendarPage from "./pages/CalendarPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import JournalPage from "./pages/JournalPage";
 import AccountsPage from "./pages/AccountsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function AppShell() {
   const { activePage, selectedTrade, setSelectedTrade, setTrades, trades } = useApp();
@@ -30,6 +31,7 @@ function AppShell() {
         {activePage === "calendar" && <CalendarPage />}
         {activePage === "import" && <ImportPage />}
         {activePage === "accounts" && <AccountsPage />}
+        {activePage === "settings" && <SettingsPage />}
 
         <div style={{
           textAlign: "center", marginTop: "48px",

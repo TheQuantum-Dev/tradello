@@ -221,13 +221,18 @@ export default function Sidebar({ onAddTrade }: SidebarProps) {
       </div>
 
       {/* Settings */}
-      <div style={{ padding: "16px 24px 0", borderTop: "1px solid var(--border)" }}>
-        <button style={{
-          display: "flex", alignItems: "center", gap: "10px",
-          background: "none", border: "none", color: "var(--text-muted)",
-          fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-          cursor: "pointer", padding: "8px 0",
-        }}>
+      <div style={{ padding: "16px 12px 0", borderTop: "1px solid var(--border)" }}>
+        <button
+          onClick={() => setActivePage("settings")}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", gap: "10px",
+            padding: "10px 12px", borderRadius: "8px", border: "none",
+            background: activePage === "settings" ? "var(--accent-green-dim)" : "transparent",
+            color: activePage === "settings" ? "var(--accent-green)" : "var(--text-muted)",
+            fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
+            cursor: "pointer", fontWeight: activePage === "settings" ? "600" : "400",
+          }}
+        >
           <Settings size={15} />
           Settings
         </button>
