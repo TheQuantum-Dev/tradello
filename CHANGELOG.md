@@ -2,6 +2,16 @@
 
 All notable changes to Tradello are documented here.
 
+## [1.2.0] - 2026-03-02
+
+### New Features
+
+- settings page with accent colors, trading preferences, export, and version checker (`d676ef4`)
+
+### Bug Fixes
+
+- accent color persists on refresh, improved version checker animation (`11824eb`)
+
 ## [1.1.0] - 2026-02-28
 
 ### New Features
