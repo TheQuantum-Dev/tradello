@@ -1,19 +1,21 @@
 "use client";
 import {
   LayoutDashboard, BookOpen, BarChart2, Calendar,
-  Upload, PlusCircle, Settings, Wallet, ChevronDown,
+  Upload, PlusCircle, Settings, Wallet, ChevronDown, FileDown,
 } from "lucide-react";
+import Image from "next/image";
 import { useApp } from "../context/AppContext";
 import { PageId, Account } from "../lib/types";
 import { useState } from "react";
 
 const NAV_ITEMS: { icon: any; label: string; id: PageId }[] = [
-  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
-  { icon: BookOpen, label: "Journal", id: "journal" },
-  { icon: BarChart2, label: "Analytics", id: "analytics" },
-  { icon: Calendar, label: "Calendar", id: "calendar" },
-  { icon: Wallet, label: "Accounts", id: "accounts" },
-  { icon: Upload, label: "Import Trades", id: "import" },
+  { icon: LayoutDashboard, label: "Dashboard",    id: "dashboard" },
+  { icon: BookOpen,        label: "Journal",       id: "journal" },
+  { icon: BarChart2,       label: "Analytics",     id: "analytics" },
+  { icon: Calendar,        label: "Calendar",      id: "calendar" },
+  { icon: Wallet,          label: "Accounts",      id: "accounts" },
+  { icon: Upload,          label: "Import Trades", id: "import" },
+  { icon: FileDown,        label: "Export",        id: "export" },
 ];
 
 interface SidebarProps {
@@ -33,18 +35,15 @@ export default function Sidebar({ onAddTrade }: SidebarProps) {
       padding: "24px 0",
     }}>
       {/* Logo */}
-      <div style={{ padding: "0 24px 24px" }}>
-        <h1 style={{
-          fontSize: "24px", fontWeight: "800",
-          background: "linear-gradient(135deg, #00e57a, #4d9fff)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-          letterSpacing: "-0.5px",
-        }}>
-          Tradello
-        </h1>
-        <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-          Trading Journal
-        </p>
+      <div style={{ paddingBottom: "28px" }}>
+        <Image
+          src="/tradello-logo-dark.svg"
+          alt="Tradello"
+          width={190}
+          height={46}
+          priority
+          style={{ display: "block", margin: "0 auto" }}
+        />
       </div>
 
       {/* Account Switcher */}

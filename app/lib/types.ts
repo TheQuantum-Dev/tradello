@@ -44,4 +44,5 @@ export type PageId =
   | "calendar"
   | "import"
   | "accounts"
-  | "settings";
+  | "settings"
+  | "export";

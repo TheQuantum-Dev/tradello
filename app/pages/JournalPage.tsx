@@ -2,7 +2,11 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
 import { Trade } from "../lib/types";
-import { ChevronDown, ChevronUp, Search, Tag, TrendingUp, TrendingDown, Calendar } from "lucide-react";
+import {
+  ChevronDown, ChevronUp, Search, Tag,
+  TrendingUp, TrendingDown, BookOpen,
+  Clock, MessageSquare, Image as ImageIcon,
+} from "lucide-react";
 
 interface DayGroup {
   date: string;
@@ -20,8 +24,7 @@ function groupByDay(trades: Trade[]): DayGroup[] {
   }
   return Object.entries(map)
     .map(([date, trades]) => ({
-      date,
-      trades,
+      date, trades,
       totalPnl: trades.reduce((s, t) => s + t.pnl, 0),
       wins: trades.filter((t) => t.status === "win").length,
       losses: trades.filter((t) => t.status === "loss").length,
@@ -32,114 +35,170 @@ function groupByDay(trades: Trade[]): DayGroup[] {
 function TradeCard({ trade, onOpen }: { trade: Trade; onOpen: (t: Trade) => void }) {
   const tags = Array.isArray(trade.tags) ? trade.tags : [];
   const images = Array.isArray(trade.imageUrls) ? trade.imageUrls : [];
+  const isWin = trade.pnl >= 0;
 
   return (
     <div
       onClick={() => onOpen(trade)}
       style={{
-        background: "var(--bg-secondary)", borderRadius: "10px",
-        padding: "14px 16px", cursor: "pointer",
+        background: "var(--bg-secondary)",
+        borderRadius: "12px",
         border: "1px solid var(--border)",
-        transition: "border-color 0.15s ease",
+        overflow: "hidden",
+        cursor: "pointer",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
       }}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = trade.pnl >= 0 ? "#00e57a" : "#ff4d6a"}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border)"}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = isWin ? "rgba(0,229,122,0.4)" : "rgba(255,77,106,0.4)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = isWin
+          ? "0 4px 20px rgba(0,229,122,0.08)"
+          : "0 4px 20px rgba(255,77,106,0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "15px", fontWeight: "700", color: "#f0f0ff" }}>
-            {trade.underlying}
-          </span>
-          <span style={{
-            padding: "2px 7px", borderRadius: "4px", fontSize: "10px", fontWeight: "600",
-            background: trade.optionType === "call" ? "rgba(77,159,255,0.15)" : "rgba(255,77,106,0.15)",
-            color: trade.optionType === "call" ? "#4d9fff" : "#ff4d6a",
-          }}>
-            {trade.optionType ? trade.optionType.toUpperCase() : trade.type.toUpperCase()}
-          </span>
-          {trade.strike && (
-            <span style={{ fontSize: "11px", color: "#8888aa" }}>
-              ${trade.strike} · {trade.expiry}
+      {/* Accent bar */}
+      <div style={{
+        height: "3px",
+        background: isWin
+          ? "linear-gradient(90deg, #00e57a, #4d9fff)"
+          : "linear-gradient(90deg, #ff4d6a, #ff8c69)",
+      }} />
+
+      <div style={{ padding: "14px 16px" }}>
+        {/* Top row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-primary)" }}>
+              {trade.underlying}
             </span>
-          )}
-        </div>
-        <div style={{
-          fontSize: "16px", fontWeight: "700",
-          color: trade.pnl >= 0 ? "#00e57a" : "#ff4d6a",
-        }}>
-          {trade.pnl >= 0 ? "+" : ""}${trade.pnl.toFixed(2)}
-        </div>
-      </div>
-
-      {/* Meta row */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: tags.length || trade.journalEntry || images.length ? "10px" : "0" }}>
-        {trade.entryTime && (
-          <span style={{ fontSize: "11px", color: "#8888aa" }}>
-            Entry: {trade.entryTime}
-          </span>
-        )}
-        {trade.exitTime && (
-          <span style={{ fontSize: "11px", color: "#8888aa" }}>
-            Exit: {trade.exitTime}
-          </span>
-        )}
-        {trade.rr && (
-          <span style={{ fontSize: "11px", color: "#8888aa" }}>
-            R:R {trade.rr}
-          </span>
-        )}
-        <span style={{ fontSize: "11px", color: "#8888aa" }}>
-          Qty: {trade.quantity}
-        </span>
-      </div>
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-          {tags.map((tag: string) => (
-            <span key={tag} style={{
-              padding: "2px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: "600",
-              background: "rgba(0,229,122,0.1)", color: "#00e57a",
+            <span style={{
+              padding: "2px 8px", borderRadius: "6px", fontSize: "10px", fontWeight: "700",
+              background: trade.optionType === "call"
+                ? "rgba(77,159,255,0.12)" : "rgba(255,77,106,0.12)",
+              color: trade.optionType === "call" ? "#4d9fff" : "#ff4d6a",
+              letterSpacing: "0.3px",
             }}>
-              {tag}
+              {trade.optionType ? trade.optionType.toUpperCase() : trade.type.toUpperCase()}
             </span>
-          ))}
-        </div>
-      )}
-
-      {/* Journal Preview */}
-      {trade.journalEntry && (
-        <p style={{
-          fontSize: "12px", color: "#8888aa", marginBottom: images.length ? "8px" : "0",
-          lineHeight: "1.5", display: "-webkit-box",
-          WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
-          overflow: "hidden",
-        }}>
-          {trade.journalEntry}
-        </p>
-      )}
-
-      {/* Image thumbnails */}
-      {images.length > 0 && (
-        <div style={{ display: "flex", gap: "6px" }}>
-          {images.slice(0, 3).map((url: string, i: number) => (
-            <img
-              key={i} src={url} alt="chart"
-              style={{ width: "48px", height: "36px", borderRadius: "4px", objectFit: "cover" }}
-            />
-          ))}
-          {images.length > 3 && (
+            {trade.strike && (
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                ${trade.strike} · {trade.expiry}
+              </span>
+            )}
+          </div>
+          <div style={{ textAlign: "right" }}>
             <div style={{
-              width: "48px", height: "36px", borderRadius: "4px",
-              background: "var(--bg-card)", display: "flex",
-              alignItems: "center", justifyContent: "center",
-              fontSize: "11px", color: "#8888aa",
+              fontSize: "17px", fontWeight: "800",
+              color: isWin ? "#00e57a" : "#ff4d6a",
             }}>
-              +{images.length - 3}
+              {isWin ? "+" : ""}${trade.pnl.toFixed(2)}
             </div>
+            <div style={{
+              fontSize: "10px", fontWeight: "600",
+              color: isWin ? "#00e57a" : "#ff4d6a",
+              opacity: 0.7,
+            }}>
+              {trade.status.toUpperCase()}
+            </div>
+          </div>
+        </div>
+
+        {/* Meta row */}
+        <div style={{ display: "flex", gap: "14px", marginBottom: "10px", flexWrap: "wrap" }}>
+          {(trade.entryTime || trade.exitTime) && (
+            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--text-muted)" }}>
+              <Clock size={10} />
+              {trade.entryTime && `In ${trade.entryTime}`}
+              {trade.entryTime && trade.exitTime && " · "}
+              {trade.exitTime && `Out ${trade.exitTime}`}
+            </span>
+          )}
+          {trade.rr && (
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+              R:R {trade.rr}
+            </span>
+          )}
+          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            Qty {trade.quantity}
+          </span>
+          {images.length > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--text-muted)" }}>
+              <ImageIcon size={10} />
+              {images.length} screenshot{images.length !== 1 ? "s" : ""}
+            </span>
+          )}
+          {trade.journalEntry && (
+            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--accent-green)" }}>
+              <MessageSquare size={10} />
+              Note
+            </span>
           )}
         </div>
-      )}
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px" }}>
+            {tags.map((tag: string) => (
+              <span key={tag} style={{
+                padding: "3px 9px", borderRadius: "20px", fontSize: "10px", fontWeight: "600",
+                background: "var(--accent-green-dim)",
+                color: "var(--accent-green)",
+                border: "1px solid rgba(0,229,122,0.2)",
+              }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Journal preview */}
+        {trade.journalEntry && (
+          <div style={{
+            background: "var(--bg-card)", borderRadius: "8px",
+            padding: "10px 12px", marginBottom: images.length ? "10px" : "0",
+            borderLeft: "3px solid var(--accent-green)",
+          }}>
+            <p style={{
+              fontSize: "12px", color: "var(--text-secondary)",
+              lineHeight: "1.6", margin: 0,
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical" as const,
+              overflow: "hidden",
+            }}>
+              {trade.journalEntry}
+            </p>
+          </div>
+        )}
+
+        {/* Image thumbnails */}
+        {images.length > 0 && (
+          <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+            {images.slice(0, 4).map((url: string, i: number) => (
+              <img
+                key={i} src={url} alt="chart"
+                style={{ width: "56px", height: "42px", borderRadius: "6px", objectFit: "cover", border: "1px solid var(--border)" }}
+              />
+            ))}
+            {images.length > 4 && (
+              <div style={{
+                width: "56px", height: "42px", borderRadius: "6px",
+                background: "var(--bg-card)", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                fontSize: "11px", color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+              }}>
+                +{images.length - 4}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -147,48 +206,62 @@ function TradeCard({ trade, onOpen }: { trade: Trade; onOpen: (t: Trade) => void
 function DayCard({ group, onOpenTrade }: { group: DayGroup; onOpenTrade: (t: Trade) => void }) {
   const [expanded, setExpanded] = useState(true);
   const isGreen = group.totalPnl >= 0;
+  const winRate = group.trades.length > 0
+    ? Math.round((group.wins / group.trades.length) * 100) : 0;
+
+  // Normalize date — Fidelity exports MM/DD/YYYY, we need YYYY-MM-DD for reliable parsing
+  const rawDate = group.date;
+  let normalized = rawDate;
+  if (rawDate.includes("/")) {
+    const [mm, dd, yyyy] = rawDate.split("/");
+    normalized = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  }
+  const dateLabel = new Date(normalized + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric", year: "numeric",
+  });
 
   return (
     <div style={{
       background: "var(--bg-card)", border: "1px solid var(--border)",
-      borderRadius: "16px", overflow: "hidden", marginBottom: "16px",
+      borderRadius: "16px", overflow: "hidden", marginBottom: "20px",
     }}>
-      {/* Day Header */}
+      {/* Day header */}
       <button
         onClick={() => setExpanded(!expanded)}
         style={{
-          width: "100%", padding: "16px 20px", background: "transparent",
+          width: "100%", padding: "18px 20px", background: "transparent",
           border: "none", cursor: "pointer", display: "flex",
           alignItems: "center", justifyContent: "space-between",
+          borderBottom: expanded ? "1px solid var(--border)" : "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Date */}
           <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: "15px", fontWeight: "700", color: "#f0f0ff" }}>
-              {new Date(group.date).toLocaleDateString("en-US", {
-                weekday: "long", month: "long", day: "numeric", year: "numeric",
-              })}
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-primary)" }}>
+              {dateLabel}
             </div>
-            <div style={{ fontSize: "11px", color: "#8888aa", marginTop: "2px" }}>
-              {group.trades.length} trade{group.trades.length !== 1 ? "s" : ""}
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+              {group.trades.length} trade{group.trades.length !== 1 ? "s" : ""} · {winRate}% win rate
             </div>
           </div>
 
-          {/* Win/Loss pills */}
+          {/* Pills */}
           <div style={{ display: "flex", gap: "6px" }}>
             {group.wins > 0 && (
               <span style={{
-                padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600",
+                padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700",
                 background: "rgba(0,229,122,0.1)", color: "#00e57a",
+                border: "1px solid rgba(0,229,122,0.2)",
               }}>
                 {group.wins}W
               </span>
             )}
             {group.losses > 0 && (
               <span style={{
-                padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600",
+                padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700",
                 background: "rgba(255,77,106,0.1)", color: "#ff4d6a",
+                border: "1px solid rgba(255,77,106,0.2)",
               }}>
                 {group.losses}L
               </span>
@@ -197,22 +270,30 @@ function DayCard({ group, onOpenTrade }: { group: DayGroup; onOpenTrade: (t: Tra
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{
-            fontSize: "18px", fontWeight: "700",
-            color: isGreen ? "#00e57a" : "#ff4d6a",
-          }}>
-            {isGreen ? "+" : ""}${group.totalPnl.toFixed(2)}
+          <div style={{ textAlign: "right" }}>
+            <div style={{
+              fontSize: "20px", fontWeight: "800",
+              color: isGreen ? "#00e57a" : "#ff4d6a",
+            }}>
+              {isGreen ? "+" : ""}${group.totalPnl.toFixed(2)}
+            </div>
           </div>
-          {expanded
-            ? <ChevronUp size={16} color="#8888aa" />
-            : <ChevronDown size={16} color="#8888aa" />
-          }
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "8px",
+            background: "var(--bg-secondary)", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }}>
+            {expanded
+              ? <ChevronUp size={14} color="var(--text-muted)" />
+              : <ChevronDown size={14} color="var(--text-muted)" />
+            }
+          </div>
         </div>
       </button>
 
-      {/* Trade Cards */}
+      {/* Trade cards */}
       {expanded && (
-        <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ padding: "16px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "10px" }}>
           {group.trades.map((trade) => (
             <TradeCard key={trade.id} trade={trade} onOpen={onOpenTrade} />
           ))}
@@ -228,7 +309,6 @@ export default function JournalPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "win" | "loss">("all");
   const [filterTag, setFilterTag] = useState("");
 
-  // Collect all unique tags
   const allTags = useMemo(() => {
     const set = new Set<string>();
     for (const t of trades) {
@@ -238,7 +318,6 @@ export default function JournalPage() {
     return Array.from(set);
   }, [trades]);
 
-  // Filter trades
   const filtered = useMemo(() => {
     return trades.filter((t) => {
       if (filterStatus !== "all" && t.status !== filterStatus) return false;
@@ -255,19 +334,32 @@ export default function JournalPage() {
 
   const groups = useMemo(() => groupByDay(filtered), [filtered]);
 
-  // Stats strip
-  const bestDay = groups.reduce((best, g) => g.totalPnl > best ? g.totalPnl : best, -Infinity);
-  const worstDay = groups.reduce((worst, g) => g.totalPnl < worst ? g.totalPnl : worst, Infinity);
-  const avgDay = groups.length > 0
-    ? groups.reduce((s, g) => s + g.totalPnl, 0) / groups.length
-    : 0;
+  const bestDay = groups.length > 0 ? groups.reduce((b, g) => g.totalPnl > b ? g.totalPnl : b, -Infinity) : 0;
+  const worstDay = groups.length > 0 ? groups.reduce((w, g) => g.totalPnl < w ? g.totalPnl : w, Infinity) : 0;
+  const avgDay = groups.length > 0 ? groups.reduce((s, g) => s + g.totalPnl, 0) / groups.length : 0;
+  const journalledTrades = trades.filter((t) => t.journalEntry).length;
 
   if (trades.length === 0) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: "12px" }}>
-        <Calendar size={32} color="#8888aa" />
-        <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#f0f0ff" }}>No trades yet</h2>
-        <p style={{ color: "#8888aa", fontSize: "14px" }}>Import trades to start your journal</p>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        height: "60vh", flexDirection: "column", gap: "16px",
+      }}>
+        <div style={{
+          width: "64px", height: "64px", borderRadius: "16px",
+          background: "var(--accent-green-dim)", display: "flex",
+          alignItems: "center", justifyContent: "center",
+        }}>
+          <BookOpen size={28} color="var(--accent-green)" />
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: "22px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "8px" }}>
+            No trades yet
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+            Import trades or add one manually to start your journal
+          </p>
+        </div>
       </div>
     );
   }
@@ -276,48 +368,48 @@ export default function JournalPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "26px", fontWeight: "700", color: "#f0f0ff", letterSpacing: "-0.5px" }}>
+        <h2 style={{ fontSize: "28px", fontWeight: "800", color: "var(--text-primary)", letterSpacing: "-0.5px", marginBottom: "4px" }}>
           Journal
         </h2>
-        <p style={{ color: "#8888aa", fontSize: "14px", marginTop: "4px" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
           Your trading diary — review every day and every trade
         </p>
       </div>
 
       {/* Stats Strip */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-        gap: "12px", marginBottom: "24px",
-      }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "24px" }}>
         {[
-          { label: "Days Traded", value: String(groups.length), icon: Calendar, positive: true },
-          { label: "Best Day", value: `+$${bestDay === -Infinity ? "0.00" : bestDay.toFixed(2)}`, icon: TrendingUp, positive: true },
-          { label: "Worst Day", value: `$${worstDay === Infinity ? "0.00" : worstDay.toFixed(2)}`, icon: TrendingDown, positive: false },
-          { label: "Avg Day", value: `${avgDay >= 0 ? "+" : ""}$${avgDay.toFixed(2)}`, icon: TrendingUp, positive: avgDay >= 0 },
-        ].map(({ label, value, icon: Icon, positive }) => (
+          { label: "Days Traded", value: String(groups.length), color: "var(--accent-green)", icon: BookOpen },
+          { label: "Best Day", value: `+$${bestDay === -Infinity || bestDay === 0 ? "0.00" : bestDay.toFixed(2)}`, color: "#00e57a", icon: TrendingUp },
+          { label: "Worst Day", value: `$${worstDay === Infinity || worstDay === 0 ? "0.00" : worstDay.toFixed(2)}`, color: "#ff4d6a", icon: TrendingDown },
+          { label: "Notes Written", value: `${journalledTrades} / ${trades.length}`, color: "var(--accent-green)", icon: MessageSquare },
+        ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} style={{
             background: "var(--bg-card)", border: "1px solid var(--border)",
-            borderRadius: "12px", padding: "16px",
+            borderRadius: "12px", padding: "16px 18px",
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-              <span style={{ fontSize: "11px", color: "#8888aa", fontWeight: "600" }}>{label}</span>
-              <Icon size={14} color={positive ? "#00e57a" : "#ff4d6a"} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                {label}
+              </span>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                background: "var(--accent-green-dim)", display: "flex",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon size={13} color="var(--accent-green)" />
+              </div>
             </div>
-            <div style={{ fontSize: "18px", fontWeight: "700", color: positive ? "#00e57a" : "#ff4d6a" }}>
-              {value}
-            </div>
+            <div style={{ fontSize: "20px", fontWeight: "800", color }}>{value}</div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div style={{
-        display: "flex", gap: "12px", marginBottom: "24px",
-        alignItems: "center", flexWrap: "wrap",
-      }}>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "24px", alignItems: "center", flexWrap: "wrap" }}>
         {/* Search */}
         <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
-          <Search size={14} color="#8888aa" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
+          <Search size={14} color="var(--text-muted)" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -325,47 +417,49 @@ export default function JournalPage() {
             style={{
               width: "100%", padding: "9px 12px 9px 34px", borderRadius: "8px",
               border: "1px solid var(--border)", background: "var(--bg-card)",
-              color: "#f0f0ff", fontSize: "13px", fontFamily: "'DM Sans', sans-serif",
-              boxSizing: "border-box" as const,
+              color: "var(--text-primary)", fontSize: "13px",
+              fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" as const,
             }}
           />
         </div>
 
-        {/* Win/Loss filter */}
-        {(["all", "win", "loss"] as const).map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            style={{
-              padding: "8px 16px", borderRadius: "8px", border: "1px solid",
-              borderColor: filterStatus === status
-                ? status === "win" ? "#00e57a" : status === "loss" ? "#ff4d6a" : "#8888aa"
-                : "var(--border)",
-              background: filterStatus === status
-                ? status === "win" ? "rgba(0,229,122,0.1)" : status === "loss" ? "rgba(255,77,106,0.1)" : "rgba(136,136,170,0.1)"
-                : "transparent",
-              color: filterStatus === status
-                ? status === "win" ? "#00e57a" : status === "loss" ? "#ff4d6a" : "#f0f0ff"
-                : "#8888aa",
-              fontSize: "12px", fontWeight: "600", cursor: "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            {status === "all" ? "All" : status === "win" ? "Wins" : "Losses"}
-          </button>
-        ))}
+        {/* Status filter */}
+        <div style={{ display: "flex", gap: "6px" }}>
+          {(["all", "win", "loss"] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              style={{
+                padding: "8px 16px", borderRadius: "8px", border: "1px solid",
+                borderColor: filterStatus === status
+                  ? status === "win" ? "#00e57a" : status === "loss" ? "#ff4d6a" : "var(--accent-green)"
+                  : "var(--border)",
+                background: filterStatus === status
+                  ? status === "win" ? "rgba(0,229,122,0.1)" : status === "loss" ? "rgba(255,77,106,0.1)" : "var(--accent-green-dim)"
+                  : "transparent",
+                color: filterStatus === status
+                  ? status === "win" ? "#00e57a" : status === "loss" ? "#ff4d6a" : "var(--accent-green)"
+                  : "var(--text-muted)",
+                fontSize: "12px", fontWeight: "600", cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              {status === "all" ? "All" : status === "win" ? "Wins" : "Losses"}
+            </button>
+          ))}
+        </div>
 
         {/* Tag filter */}
         {allTags.length > 0 && (
           <div style={{ position: "relative" }}>
-            <Tag size={12} color="#8888aa" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+            <Tag size={12} color="var(--text-muted)" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
             <select
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
               style={{
                 padding: "8px 12px 8px 28px", borderRadius: "8px",
                 border: "1px solid var(--border)", background: "var(--bg-card)",
-                color: filterTag ? "#00e57a" : "#8888aa",
+                color: filterTag ? "var(--accent-green)" : "var(--text-muted)",
                 fontSize: "12px", fontFamily: "'DM Sans', sans-serif",
                 cursor: "pointer", appearance: "none" as const,
               }}
@@ -379,12 +473,9 @@ export default function JournalPage() {
         )}
       </div>
 
-      {/* Day Groups */}
+      {/* Day groups */}
       {groups.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "48px",
-          color: "#8888aa", fontSize: "14px",
-        }}>
+        <div style={{ textAlign: "center", padding: "64px", color: "var(--text-muted)", fontSize: "14px" }}>
           No trades match your filters
         </div>
       ) : (

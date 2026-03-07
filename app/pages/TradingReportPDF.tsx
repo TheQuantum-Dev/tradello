@@ -1,8 +1,44 @@
 "use client";
 import {
-  Document, Page, Text, View, StyleSheet, Image,
+  Document, Page, Text, View, StyleSheet,
+  Svg, Rect, Polyline, Circle, Defs,
+  LinearGradient, Stop,
 } from "@react-pdf/renderer";
 import { Trade, Account } from "../lib/types";
+
+// ─── Logo built entirely from react-pdf SVG primitives ───────────────────────
+// Mirrors tradello-logo-light.svg exactly: light bg, dark T, green→blue line
+function TradelloLogoPDF() {
+  return (
+    <Svg width="135" height="33" viewBox="0 0 180 44">
+      <Defs>
+        <LinearGradient id="line-grad" x1="7" y1="34" x2="37" y2="11">
+          <Stop offset="0%" stopColor="#00c464" />
+          <Stop offset="100%" stopColor="#2563eb" />
+        </LinearGradient>
+      </Defs>
+
+      {/* Icon box — light background */}
+      <Rect x="0" y="0" width="44" height="44" rx="10" fill="#e8e8f8" />
+
+      {/* Chart line — behind the T */}
+      <Polyline
+        points="7,34 15,27 23,30 37,11"
+        fill="none"
+        stroke="url(#line-grad)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx="37" cy="11" r="2.8" fill="#2563eb" />
+
+      {/* T crossbar — on top */}
+      <Rect x="9" y="13" width="26" height="4.5" rx="2.25" fill="#0a0a1a" />
+      {/* T stem — on top */}
+      <Rect x="19.5" y="13" width="5" height="20" rx="2.5" fill="#0a0a1a" />
+    </Svg>
+  );
+}
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -16,16 +52,16 @@ const styles = StyleSheet.create({
 
   // Cover
   coverHeader: {
-    marginBottom: 40,
+    marginBottom: 48,
     borderBottom: "2px solid #00c464",
-    paddingBottom: 28,
+    paddingBottom: 24,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
   coverBrand: {
     flexDirection: "column",
-    alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   brandWordmark: {
     fontSize: 28,
@@ -165,55 +201,6 @@ const styles = StyleSheet.create({
   colPnl:    { flex: 1,   fontSize: 8, fontFamily: "Helvetica-Bold", textAlign: "right" },
   colStatus: { width: 36, fontSize: 8, fontFamily: "Helvetica-Bold", textAlign: "right" },
 
-  // Journal entries
-  journalCard: {
-    border: "1px solid #e0e0f0",
-    borderRadius: 6,
-    padding: 14,
-    marginBottom: 12,
-    backgroundColor: "#fafaff",
-  },
-  journalCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottom: "1px solid #e8e8f8",
-  },
-  journalSymbol: {
-    fontSize: 12,
-    fontFamily: "Helvetica-Bold",
-    color: "#1a1a2e",
-  },
-  journalMeta: {
-    fontSize: 8,
-    color: "#888",
-    marginBottom: 6,
-  },
-  journalPnl: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-  },
-  journalTagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 4,
-    marginBottom: 6,
-  },
-  journalTag: {
-    fontSize: 7,
-    color: "#00b85e",
-    backgroundColor: "#e8fdf4",
-    padding: "2 6",
-    borderRadius: 3,
-  },
-  journalText: {
-    fontSize: 9,
-    color: "#444",
-    lineHeight: 1.6,
-  },
-
   // Footer
   footer: {
     position: "absolute",
@@ -240,25 +227,10 @@ interface Props {
   trades: Trade[];
   account: Account | null;
   dateRange?: { from: string; to: string };
-  logoUrl?: string;
-  options?: {
-    includeCover?: boolean;
-    includeStats?: boolean;
-    includeDailyBreakdown?: boolean;
-    includeTradeHistory?: boolean;
-    includeJournal?: boolean;
-  };
 }
 
 // ─── Document ─────────────────────────────────────────────────────────────────
-export default function TradingReportPDF({ trades, account, dateRange, logoUrl, options = {} }: Props) {
-  const {
-    includeCover = true,
-    includeStats = true,
-    includeDailyBreakdown = true,
-    includeTradeHistory = true,
-    includeJournal = false,
-  } = options;
+export default function TradingReportPDF({ trades, account, dateRange }: Props) {
   const wins   = trades.filter((t) => t.status === "win");
   const losses = trades.filter((t) => t.status === "loss");
   const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
@@ -290,103 +262,94 @@ export default function TradingReportPDF({ trades, account, dateRange, logoUrl, 
       <Page size="A4" style={styles.page}>
 
         {/* Header with logo */}
-        {includeCover && (
-          <View style={styles.coverHeader}>
-            <View style={styles.coverBrand}>
-              {logoUrl
-                ? <Image src={logoUrl} style={{ width: 200, height: 49 }} />
-                : <Text style={styles.brandWordmark}>tradello</Text>
-              }
-              <Text style={styles.brandSub}>Trading Performance Report</Text>
-            </View>
+        <View style={styles.coverHeader}>
+          <View style={styles.coverBrand}>
+            <TradelloLogoPDF />
+            <Text style={styles.brandSub}>Trading Performance Report</Text>
           </View>
-        )}
+        </View>
 
         {/* Meta */}
-        {includeCover && (
-          <View style={styles.coverMeta}>
-            {account && (
-              <>
-                <View style={styles.coverMetaRow}>
-                  <Text style={styles.coverMetaLabel}>Account</Text>
-                  <Text style={styles.coverMetaValue}>{account.name}</Text>
-                </View>
-                <View style={styles.coverMetaRow}>
-                  <Text style={styles.coverMetaLabel}>Broker</Text>
-                  <Text style={styles.coverMetaValue}>{account.broker}</Text>
-                </View>
-              </>
-            )}
-            <View style={styles.coverMetaRow}>
-              <Text style={styles.coverMetaLabel}>Period</Text>
-              <Text style={styles.coverMetaValue}>{fromLabel} — {toLabel}</Text>
-            </View>
-            <View style={styles.coverMetaRow}>
-              <Text style={styles.coverMetaLabel}>Generated</Text>
-              <Text style={styles.coverMetaValue}>{generatedDate}</Text>
-            </View>
-            <View style={styles.coverMetaRow}>
-              <Text style={styles.coverMetaLabel}>Total Trades</Text>
-              <Text style={styles.coverMetaValue}>{trades.length}</Text>
-            </View>
+        <View style={styles.coverMeta}>
+          {account && (
+            <>
+              <View style={styles.coverMetaRow}>
+                <Text style={styles.coverMetaLabel}>Account</Text>
+                <Text style={styles.coverMetaValue}>{account.name}</Text>
+              </View>
+              <View style={styles.coverMetaRow}>
+                <Text style={styles.coverMetaLabel}>Broker</Text>
+                <Text style={styles.coverMetaValue}>{account.broker}</Text>
+              </View>
+            </>
+          )}
+          <View style={styles.coverMetaRow}>
+            <Text style={styles.coverMetaLabel}>Period</Text>
+            <Text style={styles.coverMetaValue}>{fromLabel} — {toLabel}</Text>
           </View>
-        )}
+          <View style={styles.coverMetaRow}>
+            <Text style={styles.coverMetaLabel}>Generated</Text>
+            <Text style={styles.coverMetaValue}>{generatedDate}</Text>
+          </View>
+          <View style={styles.coverMetaRow}>
+            <Text style={styles.coverMetaLabel}>Total Trades</Text>
+            <Text style={styles.coverMetaValue}>{trades.length}</Text>
+          </View>
+        </View>
 
         {/* Stats */}
-        {includeStats && (
-          <>
-            <Text style={styles.sectionTitle}>Performance Summary</Text>
-            <View style={styles.statRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Net P&L</Text>
-                <Text style={totalPnl >= 0 ? styles.statValueGreen : styles.statValueRed}>{fmt(totalPnl)}</Text>
-                <Text style={styles.statSub}>{trades.length} trades</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Win Rate</Text>
-                <Text style={winRate >= 50 ? styles.statValueGreen : styles.statValueRed}>{winRate}%</Text>
-                <Text style={styles.statSub}>{wins.length}W / {losses.length}L</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Profit Factor</Text>
-                <Text style={Number(profitFactor) >= 1 ? styles.statValueGreen : styles.statValueRed}>{profitFactor}</Text>
-                <Text style={styles.statSub}>Avg win / avg loss</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Avg Win</Text>
-                <Text style={styles.statValueGreen}>${avgWin.toFixed(2)}</Text>
-                <Text style={styles.statSub}>Per winning trade</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Avg Loss</Text>
-                <Text style={styles.statValueRed}>${avgLoss.toFixed(2)}</Text>
-                <Text style={styles.statSub}>Per losing trade</Text>
-              </View>
-            </View>
-          </>
-        )}
+        <Text style={styles.sectionTitle}>Performance Summary</Text>
+        <View style={styles.statRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Net P&L</Text>
+            <Text style={totalPnl >= 0 ? styles.statValueGreen : styles.statValueRed}>
+              {fmt(totalPnl)}
+            </Text>
+            <Text style={styles.statSub}>{trades.length} trades</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Win Rate</Text>
+            <Text style={winRate >= 50 ? styles.statValueGreen : styles.statValueRed}>
+              {winRate}%
+            </Text>
+            <Text style={styles.statSub}>{wins.length}W / {losses.length}L</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Profit Factor</Text>
+            <Text style={Number(profitFactor) >= 1 ? styles.statValueGreen : styles.statValueRed}>
+              {profitFactor}
+            </Text>
+            <Text style={styles.statSub}>Avg win / avg loss</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Avg Win</Text>
+            <Text style={styles.statValueGreen}>${avgWin.toFixed(2)}</Text>
+            <Text style={styles.statSub}>Per winning trade</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Avg Loss</Text>
+            <Text style={styles.statValueRed}>${avgLoss.toFixed(2)}</Text>
+            <Text style={styles.statSub}>Per losing trade</Text>
+          </View>
+        </View>
 
         {/* Daily Breakdown */}
-        {includeDailyBreakdown && (
-          <>
-            <Text style={styles.sectionTitle}>Daily Breakdown</Text>
-            {days.map(([date, dayTrades]) => {
-              const dayPnl  = dayTrades.reduce((s, t) => s + t.pnl, 0);
-              const dayWins = dayTrades.filter((t) => t.status === "win").length;
-              return (
-                <View key={date} style={styles.dayRow}>
-                  <Text style={styles.dayDate}>{date}</Text>
-                  <Text style={styles.dayTrades}>
-                    {dayTrades.length} trade{dayTrades.length !== 1 ? "s" : ""} · {dayWins}W / {dayTrades.length - dayWins}L
-                  </Text>
-                  <Text style={[styles.dayPnl, { color: dayPnl >= 0 ? "#00b85e" : "#cc3355" }]}>
-                    {fmt(dayPnl)}
-                  </Text>
-                </View>
-              );
-            })}
-          </>
-        )}
+        <Text style={styles.sectionTitle}>Daily Breakdown</Text>
+        {days.map(([date, dayTrades]) => {
+          const dayPnl  = dayTrades.reduce((s, t) => s + t.pnl, 0);
+          const dayWins = dayTrades.filter((t) => t.status === "win").length;
+          return (
+            <View key={date} style={styles.dayRow}>
+              <Text style={styles.dayDate}>{date}</Text>
+              <Text style={styles.dayTrades}>
+                {dayTrades.length} trade{dayTrades.length !== 1 ? "s" : ""} · {dayWins}W / {dayTrades.length - dayWins}L
+              </Text>
+              <Text style={[styles.dayPnl, { color: dayPnl >= 0 ? "#00b85e" : "#cc3355" }]}>
+                {fmt(dayPnl)}
+              </Text>
+            </View>
+          );
+        })}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
@@ -396,7 +359,6 @@ export default function TradingReportPDF({ trades, account, dateRange, logoUrl, 
       </Page>
 
       {/* ── Page 2+: Trade History ── */}
-      {includeTradeHistory && (
       <Page size="A4" style={{ ...styles.page, paddingTop: 36 }}>
         <Text style={styles.sectionTitle}>Trade History</Text>
 
@@ -447,69 +409,6 @@ export default function TradingReportPDF({ trades, account, dateRange, logoUrl, 
           />
         </View>
       </Page>
-      )}
-
-      {/* ── Journal Entries ── */}
-      {includeJournal && (() => {
-        const journalTrades = trades.filter((t) => t.journalEntry && t.journalEntry.trim().length > 0);
-        if (journalTrades.length === 0) return null;
-        return (
-          <Page size="A4" style={{ ...styles.page, paddingTop: 36 }}>
-            <Text style={styles.sectionTitle}>Journal Entries</Text>
-            <Text style={{ fontSize: 9, color: "#888", marginBottom: 16 }}>
-              {journalTrades.length} trade{journalTrades.length !== 1 ? "s" : ""} with journal notes
-            </Text>
-
-            {journalTrades.map((t) => {
-              const tags = Array.isArray(t.tags) ? t.tags as string[] : [];
-              return (
-                <View key={t.id} style={styles.journalCard} wrap={false}>
-                  {/* Card header */}
-                  <View style={styles.journalCardHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Text style={styles.journalSymbol}>{t.underlying}</Text>
-                      <Text style={{ fontSize: 8, color: "#888" }}>
-                        {t.optionType ? t.optionType.toUpperCase() : t.type.toUpperCase()}
-                        {t.strike ? ` · $${t.strike}` : ""}
-                        {t.expiry ? ` · ${t.expiry}` : ""}
-                      </Text>
-                    </View>
-                    <Text style={[styles.journalPnl, { color: t.pnl >= 0 ? "#00b85e" : "#cc3355" }]}>
-                      {t.pnl >= 0 ? "+" : ""}${t.pnl.toFixed(2)}
-                    </Text>
-                  </View>
-
-                  {/* Meta */}
-                  <Text style={styles.journalMeta}>
-                    {t.date}{t.entryTime ? ` · Entry ${t.entryTime}` : ""}{t.exitTime ? ` · Exit ${t.exitTime}` : ""}{t.rr ? ` · R:R ${t.rr}` : ""}
-                  </Text>
-
-                  {/* Tags */}
-                  {tags.length > 0 && (
-                    <View style={styles.journalTagRow}>
-                      {tags.map((tag) => (
-                        <Text key={tag} style={styles.journalTag}>{tag}</Text>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Journal text */}
-                  <Text style={styles.journalText}>{t.journalEntry}</Text>
-                </View>
-              );
-            })}
-
-            <View style={styles.footer} fixed>
-              <Text style={styles.footerText}>Tradello — Trading Performance Report</Text>
-              <Text
-                style={styles.footerText}
-                render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
-                fixed
-              />
-            </View>
-          </Page>
-        );
-      })()}
     </Document>
   );
 }

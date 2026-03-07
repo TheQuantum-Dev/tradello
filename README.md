@@ -2,7 +2,15 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.1.0-00e57a?style=flat-square)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/tradello-logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="public/tradello-logo-light.svg">
+  <img alt="Tradello" src="public/tradello-logo-light.svg" width="240" />
+</picture>
+
+<br /><br />
+
+![Version](https://img.shields.io/badge/version-1.3.0-00e57a?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript)
@@ -55,16 +63,30 @@ Most trading journals are either too simple to be useful or locked behind expens
 - Monthly P&L calendar view
 - Click any day to see all trades with full detail
 
+**Export**
+- Advanced report builder with filter-based export
+- Filter by date range, ticker, tags, and trade status
+- Choose which sections to include — cover page, stats, daily breakdown, trade history, journal entries
+- Live preview before export
+- Generates a full PDF report entirely client-side — your data never leaves your machine
+
+**Settings**
+- Accent color themes — green, blue, purple, orange, pink
+- Trading preferences — default multiplier, commission, fees
+- Version checker with live update detection
+- Data management — export CSV, clear trades
+
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+|-------|-----------|
 | Framework | Next.js 15 (App Router) |
 | Language | TypeScript 5 |
 | Database | SQLite via Prisma 5 |
 | Charts | Recharts |
+| PDF | @react-pdf/renderer |
 | Icons | Lucide React |
 
 ---
@@ -79,20 +101,11 @@ Most trading journals are either too simple to be useful or locked behind expens
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/TheQuantum-Dev/tradello.git
 cd tradello
-
-# Install dependencies
 npm install
-
-# Set up environment
 cp .env.example .env
-
-# Set up the database
 npx prisma migrate dev
-
-# Start the development server
 npm run dev
 ```
 
@@ -111,13 +124,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Currently supported brokers via CSV:
 
 | Broker | Status |
-|---|---|
-| Fidelity |  Supported |
-| TD Ameritrade |  Coming soon |
-| Tastytrade |  Coming soon |
-| Interactive Brokers |  Coming soon |
-
-More brokers are on the roadmap. To add support for your broker, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+|--------|--------|
+| Fidelity | ✅ Supported |
+| TD Ameritrade | 🔜 Coming soon |
+| Tastytrade | 🔜 Coming soon |
+| Interactive Brokers | 🔜 Coming soon |
 
 ### How to export from Fidelity
 
@@ -136,11 +147,13 @@ tradello/
 │   ├── api/              # API routes (trades, accounts, uploads)
 │   ├── components/       # Shared UI components
 │   ├── context/          # Global state (AppContext)
-│   ├── lib/              # Types, Prisma client, CSV parsers
+│   ├── hooks/            # Custom hooks (useSettings)
+│   ├── lib/              # Types, Prisma client, CSV parsers, utilities
 │   └── pages/            # Page-level components
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── migrations/       # Migration history
+├── public/               # Static assets — logos, icons
 ├── scripts/
 │   └── changelog.js      # Automated changelog generator
 └── public/
@@ -151,14 +164,18 @@ tradello/
 
 ## Roadmap
 
-- [ ] TD Ameritrade, Tastytrade, IBKR CSV support
-- [ ] Settings page (theme, default account, date format)
-- [ ] Export journal as PDF or CSV
-- [ ] Sharpe ratio, Sortino ratio, drawdown duration
-- [ ] MAE/MFE analysis
-- [ ] Weekly and yearly calendar views
-- [ ] GitHub Wiki with setup guides and metric explanations
-- [ ] Hosted version (optional, for non-technical users)
+**v2.0.0 — In Progress**
+- Advanced export page with full report builder
+- Logo integration throughout the app and exported PDFs
+- Journal entries in PDF export
+- Live PDF preview before export
+
+**Upcoming**
+- TD Ameritrade, Tastytrade, IBKR CSV import
+- Sharpe ratio, Sortino ratio, drawdown duration
+- MAE/MFE analysis
+- Weekly and yearly calendar views
+- GitHub Wiki with setup guides and metric explanations
 
 ---
 
@@ -177,8 +194,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 ## License
 
 Tradello is open source under the [MIT License](./LICENSE).
-
-A hosted version may be offered in the future for users who prefer not to self-host. The core software will always remain open source.
 
 ---
 

@@ -2,10 +2,9 @@
 import { useState, useEffect } from "react";
 import { useSettings } from "../hooks/useSettings";
 import { useApp } from "../context/AppContext";
-import ExportPDFButton from "../components/ExportPDFButton";
 import {
   Palette, Sliders, Database, Info,
-  ExternalLink, Check, AlertTriangle,
+  ExternalLink, Check, AlertTriangle, FileDown,
 } from "lucide-react";
 
 const CURRENT_VERSION = "1.3.0";
@@ -95,7 +94,7 @@ function Row({ label, description, children }: {
 
 export default function SettingsPage() {
   const { settings, updateSettings, resetSettings } = useSettings();
-  const { trades, accounts } = useApp();
+  const { trades, accounts, setActivePage } = useApp();
 
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -345,10 +344,24 @@ export default function SettingsPage() {
               </button>
             </Row>
             <Row
-              label="Export Report"
-              description="Full performance report with trade history and daily breakdown"
+              label="Export PDF Report"
+              description="Generate a full performance report with filters and layout options"
             >
-              <ExportPDFButton />
+              <button
+                onClick={() => setActivePage("export")}
+                style={{
+                  padding: "8px 16px", borderRadius: "8px",
+                  border: "1px solid var(--border)",
+                  background: "transparent",
+                  color: "#f0f0ff",
+                  fontSize: "12px", fontWeight: "600", cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  display: "flex", alignItems: "center", gap: "6px",
+                }}
+              >
+                <FileDown size={13} />
+                Open Export
+              </button>
             </Row>
             <Row
               label="Clear All Trades"
