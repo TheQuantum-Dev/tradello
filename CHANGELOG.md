@@ -2,6 +2,21 @@
 
 All notable changes to Tradello are documented here.
 
+## [2.1.0] - 2026-03-09
+
+### New Features
+
+- v2.1.0 — Tradello CSV import, auto-format detection, import page redesign (`1bbcbea`)
+- Advanced Analytics Page (`359e922`)
+
+### Maintenance
+
+- release v2.0.0 (`7e761e1`)
+
+### Other Changes
+
+- Update supported versions in SECURITY.md (`a610742`)
+
 ## [2.0.0] - 2026-03-07
 
 ### New Features
