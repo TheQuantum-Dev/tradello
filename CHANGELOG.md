@@ -2,6 +2,17 @@
 
 All notable changes to Tradello are documented here.
 
+## [2.2.0] - 2026-03-13
+
+### New Features
+
+- v2.2.0 — in-app auto-update system with SSE progress and restart (`e97a23b`)
+- improved CalendarPage (`77845d2`)
+
+### Maintenance
+
+- release v2.1.0 (`174a606`)
+
 ## [2.1.0] - 2026-03-09
 
 ### New Features
